@@ -1,0 +1,6 @@
+FROM ghcr.io/martinadamsdev/node-with-pnpm
+WORKDIR /app
+ENV PNPM_HOME="/app/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+COPY pnpm-lock.yaml ./
+RUN pnpm fetch
