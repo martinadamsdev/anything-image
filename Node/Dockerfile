@@ -1,45 +1,36 @@
-# 阶段1: 构建阶段，下载并编译 Node.js
-FROM alpine AS builder
+FROM alpine:3.20
 
 ENV NODE_VERSION=20.17.0
 
-# 安装构建 Node.js 所需的依赖工具，包括 ninja
-RUN apk add --no-cache --virtual .build-deps \
-    gcc \
-    g++ \
-    make \
-    python3 \
-    libgcc \
-    libstdc++ \
-    linux-headers \
-    curl \
-    ninja \
-    curl -fsSLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION.tar.gz" \
-    && curl -fsSLO "https://nodejs.org/dist/v$NODE_VERSION/SHASUMS256.txt" \
-    && grep " node-v$NODE_VERSION.tar.gz\$" SHASUMS256.txt | sha256sum -c - \
-    && tar -xf "node-v$NODE_VERSION.tar.gz" \
-    cd "node-v$NODE_VERSION" \
-    && ./configure --ninja \
-    && ninja -C out/Release -j$(getconf _NPROCESSORS_ONLN) \
-    && DESTDIR=/usr/local ninja -C out/Release install
+RUN addgroup -g 1000 node \
+    && adduser -u 1000 -G node -s /bin/sh -D node \
+    && apk add --no-cache \
+        libstdc++ \
+    && apk add --no-cache --virtual .build-deps \
+        curl \
+    && ARCH='' OPENSSL_ARCH='linux*' \
+    && alpineArch="$(apk --print-arch)" \
+    && case "${alpineArch##*-}" in \
+        x86_64) ARCH='x64'; CHECKSUM="913547514c21152f09d46b8b140d30dd5ea40d2e3ac4ddc6ff3e12a666bec482"; OPENSSL_ARCH=linux-x86_64 ;; \
+        x86) OPENSSL_ARCH=linux-elf ;; \
+        aarch64) OPENSSL_ARCH=linux-aarch64 ;; \
+        arm*) OPENSSL_ARCH=linux-armv4 ;; \
+        ppc64le) OPENSSL_ARCH=linux-ppc64le ;; \
+        s390x) OPENSSL_ARCH=linux-s390x ;; \
+        *) echo "Unsupported architecture"; exit 1 ;; \
+      esac \
+    && curl -fsSLO --compressed "https://unofficial-builds.nodejs.org/download/release/v$NODE_VERSION/node-v$NODE_VERSION-linux-$ARCH-musl.tar.xz" \
+    && tar -xJf "node-v$NODE_VERSION-linux-$ARCH-musl.tar.xz" -C /usr/local --strip-components=1 --no-same-owner \
+    && ln -s /usr/local/bin/node /usr/local/bin/nodejs \
+    # Remove unused OpenSSL headers to save ~34MB. See this NodeJS issue: https://github.com/nodejs/node/issues/46451
+    && find /usr/local/include/node/openssl/archs -mindepth 1 -maxdepth 1 ! -name "$OPENSSL_ARCH" -exec rm -rf {} + \
+    && apk del .build-deps \
+    # smoke tests
+    && node --version \
+    && npm --version \
+    && rm -rf /tmp/*
 
-# # 阶段2: 生成精简版运行时镜像
-# FROM alpine:3.18 AS runtime
+COPY docker-entrypoint.sh /usr/local/bin/
+ENTRYPOINT ["docker-entrypoint.sh"]
 
-# # 安装 Node.js 运行时所需的依赖
-# RUN apk add --no-cache libgcc libstdc++
-
-# # 从构建阶段复制 Node.js 的二进制文件
-# COPY --from=build /usr/local /usr/local
-
-# # 创建非 root 用户
-# RUN addgroup -S node && adduser -S node -G node
-
-# # 切换到非 root 用户
-# USER node
-
-# # 设置工作目录
-# WORKDIR /app
-
-# # 默认命令：启动 Node.js REPL 或应用
-# CMD ["node"]
+CMD ["node"]

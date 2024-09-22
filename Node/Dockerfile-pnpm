@@ -2,4 +2,4 @@ FROM node:20.17.0-alpine
 WORKDIR /app
 ENV PNPM_HOME="/app/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable pnpm && pnpm add pm2 -g && pnpm store prune
+RUN corepack enable && corepack install pnpm -g && corepack cache clean && pnpm -v

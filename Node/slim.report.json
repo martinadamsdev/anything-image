@@ -50,13 +50,13 @@
       "exe_path": ""
     }
   },
-  "minified_image_size": 44749280,
+  "minified_image_size": 44749289,
   "minified_image_size_human": "45 MB",
-  "minified_image": "node:basee",
-  "minified_image_id": "sha256:c7f76cb161f738d09db1967634f615bdb9be20654bbf0b18b29174b05c057efe",
-  "minified_image_digest": "sha256:7472a11d7730031819a36bdcf96fbd1b162e98b44844309432a8f1c86d9075b8",
+  "minified_image": "node",
+  "minified_image_id": "sha256:38bf17c1a04940360315295cd06ccd3deeff1642cb63ac622684857fdf3038d3",
+  "minified_image_digest": "sha256:bdbc8471400714d889d7bc55d8589dcf0432ddce895cd763d6e2bb2978004269",
   "minified_image_has_data": true,
-  "minified_by": 1.0578117681446495,
+  "minified_by": 1.0578115553970031,
   "artifact_location": "/tmp/slim-state/.slim-state/images/2d07db07a2df6830718ae2a47db6fedce6745f5bcd174c398f2acdda90a11c03/artifacts",
   "container_report_name": "creport.json",
   "seccomp_profile_name": "node-seccomp.json",
